@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISS LIVE TRACKER | Real-Time Space Station Visualization</title>
+
+    <!-- Leaflet Map CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+          crossorigin="" />
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="brand">
+                <div class="brand-icon-wrapper">
+                    <img src="{{ url_for('static', filename='images/iss-icon.svg') }}" alt="ISS Satellite Logo" class="brand-icon">
+                </div>
+                <div class="brand-text">
+                    <h1 class="brand-title">ISS LIVE TRACKER</h1>
+                    <p class="brand-subtitle">Real-Time International Space Station Tracking &amp; Visualization</p>
+                </div>
+            </div>
+
+            <div class="nav-actions">
+                <div class="status-badge" id="liveBadge">
+                    <span class="status-dot"></span>
+                    <span class="status-text" id="statusLabel">CONNECTING...</span>
+                </div>
+                <div class="refresh-pill">
+                    <span class="timer-icon">⏱️</span>
+                    <span id="countdownText">Next update: 5s</span>
+                </div>
+                <button id="btnManualRefresh" class="btn btn-secondary" title="Force Refresh Now">
+                    <svg class="btn-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                    </svg>
+                    <span>Refresh</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Error / Alert Banner -->
+    <div id="errorBanner" class="alert-banner" style="display: none;">
+        <div class="alert-content">
+            <span class="alert-icon">⚠️</span>
+            <span id="errorMessage" class="alert-text">Unable to retrieve live ISS data. Retrying...</span>
+        </div>
+        <button id="btnDismissAlert" class="btn-close" aria-label="Dismiss">&times;</button>
+    </div>
+
+    <!-- Main Container -->
+    <main class="main-container">
+
+        <!-- Section 1: Live Telemetry Cards -->
+        <section class="dashboard-grid">
+            
+            <!-- Latitude Card -->
+            <div class="metric-card">
+                <div class="card-header">
+                    <span class="card-label">CURRENT LATITUDE</span>
+                    <div class="icon-circle icon-blue">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="2" y1="12" x2="22" y2="12"/>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="metric-value" id="valLatitude">--.----°</div>
+                    <div class="metric-subtext" id="subLatitude">Awaiting coordinates...</div>
+                </div>
+            </div>
+
+            <!-- Longitude Card -->
+            <div class="metric-card">
+                <div class="card-header">
+                    <span class="card-label">CURRENT LONGITUDE</span>
+                    <div class="icon-circle icon-cyan">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="2" x2="12" y2="22"/>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="metric-value" id="valLongitude">--.----°</div>
+                    <div class="metric-subtext" id="subLongitude">Awaiting coordinates...</div>
+                </div>
+            </div>
+
+            <!-- Altitude Card -->
+            <div class="metric-card">
+                <div class="card-header">
+                    <span class="card-label">ORBITAL ALTITUDE</span>
+                    <div class="icon-circle icon-indigo">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="19" x2="12" y2="5"/>
+                            <polyline points="5 12 12 5 19 12"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="metric-value" id="valAltitude">-- km</div>
+                    <div class="metric-subtext" id="subAltitude">Low Earth Orbit (LEO)</div>
+                </div>
+            </div>
+
+            <!-- Velocity Card -->
+            <div class="metric-card">
+                <div class="card-header">
+                    <span class="card-label">ORBITAL VELOCITY</span>
+                    <div class="icon-circle icon-teal">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="metric-value" id="valVelocity">-- km/h</div>
+                    <div class="metric-subtext" id="subVelocity">-- km/s (~Mach 22)</div>
+                </div>
+            </div>
+
+            <!-- Solar Visibility Card -->
+            <div class="metric-card">
+                <div class="card-header">
+                    <span class="card-label">SOLAR ILLUMINATION</span>
+                    <div class="icon-circle icon-amber" id="visIconCircle">
+                        <span id="visEmoji">☀️</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="metric-value" id="valVisibility">--</div>
+                    <div class="metric-subtext" id="subVisibility">Orbital Day/Night state</div>
+                </div>
+            </div>
+
+            <!-- Status & Last Update Card -->
+            <div class="metric-card">
+                <div class="card-header">
+                    <span class="card-label">TRACKING STATUS</span>
+                    <div class="icon-circle icon-green">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="metric-value text-success" id="valStatus">LIVE</div>
+                    <div class="metric-subtext" id="valTimestamp">Last updated: --</div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Section 2: Interactive World Map -->
+        <section class="map-section">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">Interactive Orbital Map</h2>
+                    <p class="section-desc">Real-time geographic projection and recent ground track trajectory</p>
+                </div>
+                <div class="map-toolbar">
+                    <!-- Google-style Map Mode Switcher -->
+                    <div class="map-mode-selector" title="Select Map Style (Like Google Maps)">
+                        <span class="mode-label">Mode:</span>
+                        <div class="mode-pills">
+                            <button type="button" class="mode-pill active" data-mode="default" title="Street / Standard Map">
+                                <span>🗺️ Default</span>
+                            </button>
+                            <button type="button" class="mode-pill" data-mode="satellite" title="Satellite Earth Imagery (Google-style)">
+                                <span>🛰️ Satellite</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button id="btnRecenter" class="btn btn-outline" title="Center map on ISS position">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
+                        </svg>
+                        <span>Center</span>
+                    </button>
+                    <button id="btnToggleFollow" class="btn btn-outline active" title="Toggle automatic map following">
+                        <span id="followIndicator">✓</span>
+                        <span>Auto-Follow</span>
+                    </button>
+                    <button id="btnTogglePath" class="btn btn-outline" title="Toggle orbit path polyline">
+                        <span>Toggle Trail</span>
+                    </button>
+                    <button id="btnClearTrail" class="btn btn-outline-danger" title="Clear current path history from map">
+                        <span>Clear Trail</span>
+                    </button>
+                    
+                    <!-- Full View / Fullscreen Button -->
+                    <button id="btnFullscreen" class="btn btn-primary" title="Expand to Full View Map">
+                        <svg id="fullscreenIconExpand" class="btn-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                        </svg>
+                        <svg id="fullscreenIconCompress" class="btn-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+                            <path d="M4 14h6m0 0v6m0-6L3 21m17-7h-6m0 0v6m0-6l7 7M14 4h6m-6 0v6m0-6l7 7M10 10V4m0 6H4m0 0l7-7"/>
+                        </svg>
+                        <span id="fullscreenText">Full View</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="map-wrapper" id="mapWrapper">
+                <!-- Floating Exit Button for Full View Mode -->
+                <button id="btnFloatingExitFullscreen" class="btn-floating-exit" title="Exit Full View (or press ESC)">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                    <span>Exit Full View (ESC)</span>
+                </button>
+
+                <!-- Floating Google Maps-Style Layer Widget Inside Map -->
+                <div class="floating-layer-switcher" id="floatingLayerSwitcher">
+                    <button class="layer-switch-btn active" data-mode="default" title="Standard Street Map">
+                        <span class="layer-icon">🗺️</span>
+                        <span class="layer-name">Map</span>
+                    </button>
+                    <button class="layer-switch-btn" data-mode="satellite" title="Satellite Earth Imagery">
+                        <span class="layer-icon">🛰️</span>
+                        <span class="layer-name">Satellite</span>
+                    </button>
+                </div>
+
+                <div id="map" class="leaflet-map-container"></div>
+                
+                <div class="map-legend">
+                    <div class="legend-item">
+                        <span class="legend-icon iss-legend-dot"></span>
+                        <span>Current ISS Position</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-icon trail-legend-line"></span>
+                        <span>Recent Traveled Path</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3 & 4: ISS Information Panel & Visibility Details -->
+        <section class="info-grid">
+
+            <!-- Card: About ISS -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-header-icon">🛰️</div>
+                    <div>
+                        <h3 class="info-card-title">International Space Station Details</h3>
+                        <p class="info-card-subtitle">Permanent human outpost in Low Earth Orbit</p>
+                    </div>
+                </div>
+                <div class="info-card-content">
+                    <ul class="spec-list">
+                        <li>
+                            <strong class="spec-label">Full Name:</strong>
+                            <span class="spec-value">International Space Station (ISS)</span>
+                        </li>
+                        <li>
+                            <strong class="spec-label">Type:</strong>
+                            <span class="spec-value">Modular Space Station / Microgravity Orbital Platform</span>
+                        </li>
+                        <li>
+                            <strong class="spec-label">Orbit Regime:</strong>
+                            <span class="spec-value">Low Earth Orbit (LEO) &bull; 51.64° Orbital Inclination</span>
+                        </li>
+                        <li>
+                            <strong class="spec-label">Mean Altitude:</strong>
+                            <span class="spec-value">~408 km (253 miles) above Earth's sea level</span>
+                        </li>
+                        <li>
+                            <strong class="spec-label">Orbital Velocity:</strong>
+                            <span class="spec-value">~27,600 km/h (17,150 mph) &bull; ~7.66 km per second</span>
+                        </li>
+                        <li>
+                            <strong class="spec-label">Orbital Period:</strong>
+                            <span class="spec-value">~92.68 minutes per complete Earth revolution</span>
+                        </li>
+                        <li>
+                            <strong class="spec-label">Primary Purpose:</strong>
+                            <span class="spec-value">Multidisciplinary scientific research in biology, human physiology, physical sciences, materials science, and Earth observation under sustained microgravity.</span>
+                        </li>
+                        <li>
+                            <strong class="spec-label">Habitation &amp; Crew:</strong>
+                            <span class="spec-value">Continuously inhabited since November 2000; typically hosts an international crew of 7 astronauts and cosmonauts.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Card: ISS Visibility Information & Mechanics -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-header-icon">☀️</div>
+                    <div>
+                        <h3 class="info-card-title">ISS Visibility Information</h3>
+                        <p class="info-card-subtitle">Solar illumination and naked-eye ground sighting science</p>
+                    </div>
+                </div>
+                <div class="info-card-content">
+                    <div class="visibility-status-box" id="visibilityBox">
+                        <div class="vis-status-header">
+                            <span class="vis-status-tag" id="visCurrentTag">Daylight</span>
+                            <span class="vis-status-sub" id="visCurrentSub">Solar arrays actively generating power</span>
+                        </div>
+                        <p class="vis-explanation" id="visExplanation">
+                            The ISS is currently on the sunlit side of Earth. Its massive solar arrays (spanning over 73 meters) are generating up to 120 kilowatts of electrical power.
+                        </p>
+                    </div>
+
+                    <div class="accordion-info">
+                        <h4 class="mini-heading">Why 16 Sunrises Every Day?</h4>
+                        <p class="text-sm">
+                            Because the ISS circles the Earth once every ~93 minutes at 27,600 km/h, the onboard crew witnesses approximately <strong>16 sunrises and 16 sunsets</strong> in a single 24-hour cycle. Roughly 45 minutes of each orbit is spent in daylight, followed by 45 minutes in Earth's shadow.
+                        </p>
+
+                        <h4 class="mini-heading">How to Spot the ISS from Earth?</h4>
+                        <p class="text-sm">
+                            The space station has no bright external spotlights visible from ground. Instead, it is visible to the naked eye because it reflects sunlight like a very bright moving star (often brighter than Venus). Sighting is possible during <strong>dawn or dusk</strong>: when your location is dark, but the station at 400 km altitude is still illuminated by the Sun.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Section 5: Unique Comparison - ISS vs GPS vs Communication Satellites -->
+        <section class="comparison-section">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">Orbital Classification Comparison</h2>
+                    <p class="section-desc">Understanding how the ISS differs from communication and navigation satellites</p>
+                </div>
+            </div>
+
+            <div class="comparison-grid">
+                <!-- ISS Card -->
+                <div class="comp-card highlight-card">
+                    <div class="comp-badge">Featured System</div>
+                    <h3 class="comp-title">International Space Station</h3>
+                    <div class="comp-orbit">Low Earth Orbit (LEO)</div>
+                    <ul class="comp-specs">
+                        <li><strong>Altitude:</strong> ~400 km</li>
+                        <li><strong>Orbital Speed:</strong> ~27,600 km/h</li>
+                        <li><strong>Orbital Period:</strong> ~93 minutes</li>
+                        <li><strong>Function:</strong> Manned Laboratory &amp; Science Platform</li>
+                        <li><strong>Movement:</strong> Rapidly traverses world map</li>
+                    </ul>
+                </div>
+
+                <!-- GPS Satellites Card -->
+                <div class="comp-card">
+                    <div class="comp-badge badge-neutral">Navigation Constellation</div>
+                    <h3 class="comp-title">GPS Satellites (NAVSTAR)</h3>
+                    <div class="comp-orbit">Medium Earth Orbit (MEO)</div>
+                    <ul class="comp-specs">
+                        <li><strong>Altitude:</strong> ~20,200 km</li>
+                        <li><strong>Orbital Speed:</strong> ~14,000 km/h</li>
+                        <li><strong>Orbital Period:</strong> ~12 hours</li>
+                        <li><strong>Function:</strong> Positioning &amp; Precise Atomic Timing</li>
+                        <li><strong>Movement:</strong> Constellation covers the entire globe</li>
+                    </ul>
+                </div>
+
+                <!-- Geostationary Satellites Card -->
+                <div class="comp-card">
+                    <div class="comp-badge badge-neutral">Telecommunications</div>
+                    <h3 class="comp-title">Geostationary Satellites</h3>
+                    <div class="comp-orbit">Geostationary Orbit (GEO)</div>
+                    <ul class="comp-specs">
+                        <li><strong>Altitude:</strong> ~35,786 km</li>
+                        <li><strong>Orbital Speed:</strong> ~11,000 km/h</li>
+                        <li><strong>Orbital Period:</strong> Exactly 24 hours</li>
+                        <li><strong>Function:</strong> Television, Weather &amp; Global Comms</li>
+                        <li><strong>Movement:</strong> Appears stationary above equator</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 6: Tracking History Table -->
+        <section class="history-section">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">Tracking History (SQLite Database)</h2>
+                    <p class="section-desc">Recent orbital telemetry points logged locally by the Flask backend</p>
+                </div>
+                <div class="history-actions">
+                    <button id="btnRefreshHistory" class="btn btn-outline" title="Refresh history records">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                        </svg>
+                        <span>Refresh Table</span>
+                    </button>
+                    <button id="btnClearHistory" class="btn btn-outline-danger" title="Clear tracking history in database">
+                        <span>Clear History</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-card">
+                <div class="table-responsive">
+                    <table class="data-table" id="historyTable">
+                        <thead>
+                            <tr>
+                                <th># ID</th>
+                                <th>Timestamp (UTC)</th>
+                                <th>Latitude</th>
+                                <th>Longitude</th>
+                                <th>Altitude</th>
+                                <th>Orbital Velocity</th>
+                                <th>Visibility</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">Loading telemetry history from SQLite...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-footer">
+                    <span class="text-muted text-xs" id="historyCount">Showing recent records</span>
+                    <span class="text-muted text-xs">Auto-pruning active (Max 100 entries)</span>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-left">
+                <p class="footer-title">Real-Time International Space Station (ISS) Tracking and Visualization System</p>
+                <p class="footer-meta">Department of Computer Science &amp; Engineering &bull; College Capstone Project</p>
+            </div>
+            <div class="footer-right">
+                <p class="tech-stack-list">
+                    <span>Python</span> &bull; 
+                    <span>Flask</span> &bull; 
+                    <span>Leaflet.js</span> &bull; 
+                    <span>OpenStreetMap</span> &bull; 
+                    <span>SQLite3</span> &bull; 
+                    <span>WhereTheISS API</span>
+                </p>
+                <p class="footer-copy">&copy; Real-Time Orbital Tracking System. Telemetry sourced from public space flight feeds.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Leaflet.js Library -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+            crossorigin=""></script>
+
+    <!-- Application JavaScript -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
+

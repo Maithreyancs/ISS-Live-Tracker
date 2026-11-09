@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="64" height="64">
+  <defs>
+    <!-- Solar panel gradient -->
+    <linearGradient id="solarGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="50%" stop-color="#0369a1" />
+      <stop offset="100%" stop-color="#0c4a6e" />
+    </linearGradient>
+    <!-- Module gradient -->
+    <linearGradient id="moduleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafc" />
+      <stop offset="50%" stop-color="#cbd5e1" />
+      <stop offset="100%" stop-color="#94a3b8" />
+    </linearGradient>
+    <!-- Glow filter -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#0284c7" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#glow)">
+    <!-- Main Integrated Truss Structure (horizontal backbone) -->
+    <rect x="15" y="48" width="70" height="4" rx="1" fill="#64748b" stroke="#334155" stroke-width="0.8"/>
+    
+    <!-- Left Solar Array Wings -->
+    <!-- Top Left Wing -->
+    <rect x="18" y="12" width="12" height="32" rx="1.5" fill="url(#solarGrad)" stroke="#0284c7" stroke-width="1"/>
+    <!-- Solar cell grid lines -->
+    <line x1="18" y1="20" x2="30" y2="20" stroke="#38bdf8" stroke-width="0.5" stroke-opacity="0.8"/>
+    <line x1="18" y1="28" x2="30" y2="28" stroke="#38bdf8" stroke-width="0.5" stroke-opacity="0.8"/>
+    <line x1="18" y1="36" x2="30" y2="36" stroke="#38bdf8" stroke-width="0.5" stroke-opacity="0.8"/>
+    <line x1="24" y1="12" x2="24" y2="44" stroke="#38bdf8" stroke-width="0.5" stroke-opacity="0.8"/>
+
+    <!-- Bottom Left Wing -->
+    <rect x="18" y="56" width="12" height="32" rx="1.5" fill="url(#solarGrad)" stroke="#0284c7" stroke-width="1"/>
+    <line x1="18" y1="64" x2="30" y2="64" stroke="#38bdf8" stroke-width="0.5" stroke-opacity="0.8"/>
+    <line x1="18" y1="72" x2="30" y2="72" stroke="#38bdf8" stroke-width="0.5" stroke-opacity="0.8"/>
+    <line x1="18" y1="80" x2="30" y2="80" stroke="#38bdf8" stroke-width="0.5" stroke-opacity="0.8"/>
+    <line x1="24" y1="56" x2="24" y2="88" stroke="#38bdf8" stroke-width="0.5" stroke-opacity="0.8"/>
+
+    <!-- Right Solar Array Wings -->
+    <!-- Top Right Wing -->
+    <rect x="70" y="12" width="12" height="32" rx="1.5" fill="url(#solarGrad)" stroke="#0284c7" stroke-width="1"/>
+    <line x1="70" y1="20" x2="82" y2="20" stroke="#38bdf8" stroke-width="0.5" stroke-opacity="0.8"/>
+    <line x1="70" y1="28" x2="82" y2="28" stroke="#38bdf8" stroke-width="0.5" stroke-opacity="0.8"/>
+    <line x1="70" y1="36" x2="82" y2="36" stroke="#38bdf8" stroke-width="0.5" stroke-opacity="0.8"/>
+    <line x1="76" y1="12" x2="76" y2="44" stroke="#38bdf8" stroke-width="0.5" stroke-opacity="0.8"/>
+
+    <!-- Bottom Right Wing -->
+    <rect x="70" y="56" width="12" height="32" rx="1.5" fill="url(#solarGrad)" stroke="#0284c7" stroke-width="1"/>
+    <line x1="70" y1="64" x2="82" y2="64" stroke="#38bdf8" stroke-width="0.5" stroke-opacity="0.8"/>
+    <line x1="70" y1="72" x2="82" y2="72" stroke="#38bdf8" stroke-width="0.5" stroke-opacity="0.8"/>
+    <line x1="70" y1="80" x2="82" y2="80" stroke="#38bdf8" stroke-width="0.5" stroke-opacity="0.8"/>
+    <line x1="76" y1="56" x2="76" y2="88" stroke="#38bdf8" stroke-width="0.5" stroke-opacity="0.8"/>
+
+    <!-- Radiators (white cooling panels) -->
+    <rect x="36" y="38" width="5" height="24" rx="1" fill="#f1f5f9" stroke="#94a3b8" stroke-width="0.8"/>
+    <rect x="59" y="38" width="5" height="24" rx="1" fill="#f1f5f9" stroke="#94a3b8" stroke-width="0.8"/>
+
+    <!-- Central Habitation & Laboratory Modules (Zvezda, Zarya, Destiny, Columbus, Kibo) -->
+    <rect x="46" y="32" width="8" height="36" rx="3" fill="url(#moduleGrad)" stroke="#475569" stroke-width="1"/>
+    <rect x="44" y="44" width="12" height="12" rx="2" fill="url(#moduleGrad)" stroke="#334155" stroke-width="1"/>
+    
+    <!-- Cupola / Observation Dome -->
+    <circle cx="50" cy="50" r="3" fill="#0ea5e9" stroke="#0369a1" stroke-width="0.8"/>
+
+    <!-- Docked Spacecraft / Progress / Dragon capsule -->
+    <polygon points="50,26 47,32 53,32" fill="#e2e8f0" stroke="#475569" stroke-width="0.8"/>
+    <polygon points="50,74 47,68 53,68" fill="#e2e8f0" stroke="#475569" stroke-width="0.8"/>
+  </g>
+</svg>
+
