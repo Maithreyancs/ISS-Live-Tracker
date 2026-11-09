@@ -153,7 +153,7 @@ pip install -r requirements.txt
 
 ---
 
-## 11. How to Run
+## 11. How to Run Locally
 Start the Flask development server:
 ```bash
 python app.py
@@ -164,6 +164,51 @@ Open your web browser and navigate to:
 http://127.0.0.1:5000
 ```
 The application will immediately connect to the live satellite feed and begin real-time visualization.
+
+---
+
+## 11.1 Hosting on GitHub (GitHub Pages)
+
+### Is it possible to host on GitHub?
+**Yes!** While GitHub Pages natively serves static files (HTML, CSS, JavaScript) and does not run a Python interpreter, this project has been engineered with a **Dual-Mode Architecture**:
+
+1. **When running with Flask (`python app.py`):** It uses the Flask backend, SQLite database persistence, and internal proxy routes.
+2. **When deployed to GitHub Pages:** The client-side JavaScript automatically detects static hosting and securely connects directly to the public CORS-enabled satellite telemetry API (`WhereTheISS.at`). Tracking history is seamlessly maintained using browser `localStorage`!
+
+### Step-by-Step Instructions to Host on GitHub Pages:
+
+#### Step 1: Push your code to GitHub
+If you haven't pushed your code to GitHub yet, create a new repository on [GitHub](https://github.com/new) named `iss-live-tracker`, then execute:
+```bash
+git branch -M main
+git remote add origin https://github.com/<YOUR-USERNAME>/iss-live-tracker.git
+git push -u origin main
+```
+
+#### Step 2: Enable GitHub Pages in Repository Settings
+1. Navigate to your repository on GitHub (`https://github.com/<YOUR-USERNAME>/iss-live-tracker`).
+2. Click the **Settings** tab near the top.
+3. In the left navigation menu, click **Pages** (under the "Code and automation" section).
+4. Under **Build and deployment**:
+   - **Source:** Select `Deploy from a branch`.
+   - **Branch:** Select `main` and set the folder dropdown to `/ (root)`.
+   - Click **Save**.
+5. Wait ~60 seconds for GitHub Actions to complete the deployment.
+
+#### Step 3: Access Your Live Website
+Your tracking system will be live at:
+```text
+https://<YOUR-USERNAME>.github.io/iss-live-tracker/
+```
+
+---
+
+## 11.2 Hosting the Full Flask Backend on the Cloud (Optional)
+If your college evaluation requires running the actual Python Flask backend on the cloud, you can host it for free on **Render** or **Railway**:
+1. Connect your GitHub repository to [Render.com](https://render.com).
+2. Create a new **Web Service**.
+3. Render automatically detects `Procfile` (`web: python app.py`) and `requirements.txt`.
+4. Click **Deploy Web Service** to obtain a live `https://iss-tracker.onrender.com` URL.
 
 ---
 
